@@ -14,8 +14,8 @@ import com.triton.triton.backend.exception.UserAlreadyExistsException;
 import com.triton.triton.backend.exception.UserNotVerifiedException;
 import com.triton.triton.backend.model.LocalUser;
 import com.triton.triton.backend.model.VerificationToken;
-import com.triton.triton.backend.model.dao.LocalUserDAO;
-import com.triton.triton.backend.model.dao.VerificationTokenDAO;
+import com.triton.triton.backend.model.repository.LocalUserRepository;
+import com.triton.triton.backend.model.repository.VerificationTokenRepository;
 import jakarta.mail.Message;
 import jakarta.mail.MessagingException;
 import jakarta.transaction.Transactional;
@@ -25,8 +25,6 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-
-import java.util.List;
 
 /**
  * Тестовый класс для юнит-теста UserService класса.
@@ -48,13 +46,13 @@ public class UserServiceTest {
     private JWTService jwtService;
     /** The Local User DAO. */
     @Autowired
-    private LocalUserDAO localUserDAO;
+    private LocalUserRepository localUserRepository;
     /** The encryption Service. */
     @Autowired
     private EncryptionService encryptionService;
     /** The Verification Token DAO. */
     @Autowired
-    private VerificationTokenDAO verificationTokenDAO;
+    private VerificationTokenRepository verificationTokenRepository;
 
     /**
      * Тестирует процесс регистрации пользователя.
@@ -131,7 +129,7 @@ public class UserServiceTest {
             userService.loginUser(body);
             Assertions.assertTrue(false, "Пользователь должен быть без подтвержденной почты");
         } catch (UserNotVerifiedException ex) {
-            List<VerificationToken> tokens = verificationTokenDAO.findByUser_IdOrderByIdDesc(2L);
+            List<VerificationToken> tokens = verificationTokenRepository.findByUser_IdOrderByIdDesc(2L);
             String token = tokens.get(0).getToken();
             Assertions.assertTrue(userService.verifyUser(token), "Токен должен быть корректным.");
             Assertions.assertNotNull(body, "Пользователь должен пройти верификацию.");
@@ -160,13 +158,13 @@ public class UserServiceTest {
      * @throws MessagingException
      */
     public void testResetPassword() {
-        LocalUser user = localUserDAO.findByUsernameIgnoreCase("UserA").get();
+        LocalUser user = localUserRepository.findByUsernameIgnoreCase("UserA").get();
         String token = jwtService.generatePasswordResetJWT(user);
         PasswordResetBody body = new PasswordResetBody();
         body.setToken(token);
         body.setPassword("Password123456");
         userService.resetPassword(body);
-        user = localUserDAO.findByUsernameIgnoreCase("UserA").get();
+        user = localUserRepository.findByUsernameIgnoreCase("UserA").get();
         Assertions.assertTrue(encryptionService.verifyPassword("Password123456",
                 user.getPassword()), "Смена пароля должна быть записана в БД");
     }

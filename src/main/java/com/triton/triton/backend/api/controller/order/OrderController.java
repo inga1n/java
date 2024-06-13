@@ -2,7 +2,10 @@ package com.triton.triton.backend.api.controller.order;
 
 import com.triton.triton.backend.model.LocalUser;
 import com.triton.triton.backend.model.WebOrder;
+import com.triton.triton.backend.model.repository.WebOrderDAO;
 import com.triton.triton.backend.service.OrderService;
+import com.triton.triton.backend.service.ShoppingCartService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -16,6 +19,12 @@ import java.util.List;
 @RestController
 @RequestMapping("/order")
 public class OrderController {
+
+    @Autowired
+    private WebOrderDAO WebOrderDAO;
+
+    @Autowired
+    private ShoppingCartService shoppingCartService;
 
     /** The Order Service. */
     private OrderService orderService;

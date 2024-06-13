@@ -13,14 +13,10 @@ import com.triton.triton.backend.exception.UserAlreadyExistsException;
 import com.triton.triton.backend.exception.UserNotVerifiedException;
 import com.triton.triton.backend.model.LocalUser;
 import com.triton.triton.backend.model.VerificationToken;
-import com.triton.triton.backend.model.dao.LocalUserDAO;
-import com.triton.triton.backend.model.dao.VerificationTokenDAO;
+import com.triton.triton.backend.model.repository.LocalUserRepository;
+import com.triton.triton.backend.model.repository.VerificationTokenRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
-
-import java.sql.Timestamp;
-import java.util.List;
-import java.util.Optional;
 
 /**
  * Service for handling user actions.
@@ -29,9 +25,9 @@ import java.util.Optional;
 public class UserService {
 
     /** The LocalUserDAO. */
-    private LocalUserDAO localUserDAO;
+    private LocalUserRepository localUserRepository;
     /** The VerificationTokenDAO. */
-    private VerificationTokenDAO verificationTokenDAO;
+    private VerificationTokenRepository verificationTokenRepository;
     /** The encryption service. */
     private EncryptionService encryptionService;
     /** The JWT service. */
@@ -42,16 +38,16 @@ public class UserService {
     /**
      * Constructor injected by spring.
      *
-     * @param localUserDAO
-     * @param verificationTokenDAO
+     * @param localUserRepository
+     * @param verificationTokenRepository
      * @param encryptionService
      * @param jwtService
      * @param emailService
      */
-    public UserService(LocalUserDAO localUserDAO, VerificationTokenDAO verificationTokenDAO, EncryptionService encryptionService,
+    public UserService(LocalUserRepository localUserRepository, VerificationTokenRepository verificationTokenRepository, EncryptionService encryptionService,
                        JWTService jwtService, EmailService emailService) {
-        this.localUserDAO = localUserDAO;
-        this.verificationTokenDAO = verificationTokenDAO;
+        this.localUserRepository = localUserRepository;
+        this.verificationTokenRepository = verificationTokenRepository;
         this.encryptionService = encryptionService;
         this.jwtService = jwtService;
         this.emailService = emailService;
@@ -64,8 +60,8 @@ public class UserService {
      * @throws UserAlreadyExistsException Thrown if there is already a user with the given information.
      */
     public LocalUser registerUser(RegistrationBody registrationBody) throws UserAlreadyExistsException, EmailFailureException {
-        if (localUserDAO.findByEmailIgnoreCase(registrationBody.getEmail()).isPresent()
-                || localUserDAO.findByUsernameIgnoreCase(registrationBody.getUsername()).isPresent()) {
+        if (localUserRepository.findByEmailIgnoreCase(registrationBody.getEmail()).isPresent()
+                || localUserRepository.findByUsernameIgnoreCase(registrationBody.getUsername()).isPresent()) {
             throw new UserAlreadyExistsException();
         }
         LocalUser user = new LocalUser();
@@ -76,7 +72,7 @@ public class UserService {
         user.setPassword(encryptionService.encryptPassword(registrationBody.getPassword()));
         VerificationToken verificationToken     = createVerificationToken(user);
         emailService.sendVerificationEmail(verificationToken);
-        return localUserDAO.save(user);
+        return localUserRepository.save(user);
     }
 
     /**
@@ -99,7 +95,7 @@ public class UserService {
      * @return The authentication token. Null if the request was invalid.
      */
     public String loginUser(LoginBody loginBody) throws UserNotVerifiedException, EmailFailureException {
-        Optional<LocalUser> opUser = localUserDAO.findByUsernameIgnoreCase(loginBody.getUsername());
+        Optional<LocalUser> opUser = localUserRepository.findByUsernameIgnoreCase(loginBody.getUsername());
         if (opUser.isPresent()) {
             LocalUser user = opUser.get();
             if (encryptionService.verifyPassword(loginBody.getPassword(), user.getPassword())) {
@@ -111,7 +107,7 @@ public class UserService {
                             verificationTokens.get(0).getCreatedTimestamp().before(new Timestamp(System.currentTimeMillis() - (60 * 60 * 1000)));
                     if (resend) {
                         VerificationToken verificationToken = createVerificationToken(user);
-                        verificationTokenDAO.save(verificationToken);
+                        verificationTokenRepository.save(verificationToken);
                         emailService.sendVerificationEmail(verificationToken);
                     }
                     throw new UserNotVerifiedException(resend);
@@ -128,14 +124,14 @@ public class UserService {
      */
     @Transactional
     public boolean verifyUser(String token) {
-        Optional<VerificationToken> opToken = verificationTokenDAO.findByToken(token);
+        Optional<VerificationToken> opToken = verificationTokenRepository.findByToken(token);
         if (opToken.isPresent()) {
             VerificationToken verificationToken = opToken.get();
             LocalUser user = verificationToken.getUser();
             if (!user.isEmailVerified()) {
                 user.setEmailVerified(true);
-                localUserDAO.save(user);
-                verificationTokenDAO.deleteByUser(user);
+                localUserRepository.save(user);
+                verificationTokenRepository.deleteByUser(user);
                 return true;
             }
         }
@@ -149,7 +145,7 @@ public class UserService {
      * @throws EmailFailureException
      */
     public void forgotPassword(String email) throws EmailNotFoundException, EmailFailureException {
-        Optional<LocalUser> opUser = localUserDAO.findByEmailIgnoreCase(email);
+        Optional<LocalUser> opUser = localUserRepository.findByEmailIgnoreCase(email);
         if (opUser.isPresent()) {
             LocalUser user = opUser.get();
             String token = jwtService.generatePasswordResetJWT(user);
@@ -165,11 +161,11 @@ public class UserService {
      */
     public void resetPassword(PasswordResetBody body) {
         String email = jwtService.getResetPasswordEmail(body.getToken());
-        Optional<LocalUser> opUser = localUserDAO.findByEmailIgnoreCase(email);
+        Optional<LocalUser> opUser = localUserRepository.findByEmailIgnoreCase(email);
         if (opUser.isPresent()) {
             LocalUser user = opUser.get();
             user.setPassword(encryptionService.encryptPassword(body.getPassword()));
-            localUserDAO.save(user);
+            localUserRepository.save(user);
         }
     }
 

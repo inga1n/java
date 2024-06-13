@@ -1,7 +1,7 @@
 package com.triton.triton.backend.api.security;
 
 import com.triton.triton.backend.model.LocalUser;
-import com.triton.triton.backend.model.dao.LocalUserDAO;
+import com.triton.triton.backend.model.repository.LocalUserRepository;
 import com.triton.triton.backend.service.JWTService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,7 +28,7 @@ public class JWTRequestFilterTest {
     private JWTService jwtService;
     /** The Local User DAO. */
     @Autowired
-    private LocalUserDAO localUserDAO;
+    private LocalUserRepository localUserRepository;
     /** Путь который должен пропускать только аутентифицированных пользователей. */
     private static final String AUTHENTICATED_PATH = "/auth/me";
 
@@ -59,7 +59,7 @@ public class JWTRequestFilterTest {
      */
     @Test
     public void testUnverifiedUser() throws Exception {
-        LocalUser user = localUserDAO.findByUsernameIgnoreCase("UserB").get();
+        LocalUser user = localUserRepository.findByUsernameIgnoreCase("UserB").get();
         String token = jwtService.generateJWT(user);
         mvc.perform(get(AUTHENTICATED_PATH).header("Authorization", "Bearer " + token))
                 .andExpect(status().is(HttpStatus.FORBIDDEN.value()));
@@ -71,7 +71,7 @@ public class JWTRequestFilterTest {
      */
     @Test
     public void testSuccessful() throws Exception {
-        LocalUser user = localUserDAO.findByUsernameIgnoreCase("UserA").get();
+        LocalUser user = localUserRepository.findByUsernameIgnoreCase("UserA").get();
         String token = jwtService.generateJWT(user);
         mvc.perform(get(AUTHENTICATED_PATH).header("Authorization", "Bearer " + token))
                 .andExpect(status().is(HttpStatus.OK.value()));

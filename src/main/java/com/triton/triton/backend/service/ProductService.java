@@ -3,10 +3,8 @@ package com.triton.triton.backend.service;
 import java.util.List;
 
 import com.triton.triton.backend.model.Product;
-import com.triton.triton.backend.model.dao.ProductDAO;
+import com.triton.triton.backend.model.repository.ProductDAO;
 import org.springframework.stereotype.Service;
-
-import java.util.List;
 
 /**
  * Service for handling product actions.

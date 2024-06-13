@@ -5,7 +5,7 @@ import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.exceptions.MissingClaimException;
 import com.auth0.jwt.exceptions.SignatureVerificationException;
 import com.triton.triton.backend.model.LocalUser;
-import com.triton.triton.backend.model.dao.LocalUserDAO;
+import com.triton.triton.backend.model.repository.LocalUserRepository;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,7 +25,7 @@ public class JWTServiceTest {
     private JWTService jwtService;
     /** The Local User DAO. */
     @Autowired
-    private LocalUserDAO localUserDAO;
+    private LocalUserRepository localUserRepository;
     /** Ключ алгоритма который мы используем в properties file. */
     @Value("${jwt.algorithm.key}")
     private String algorithmKey;
@@ -35,7 +35,7 @@ public class JWTServiceTest {
      */
     @Test
     public void testVerificationTokenNotUsableForLogin() {
-        LocalUser user = localUserDAO.findByUsernameIgnoreCase("UserA").get();
+        LocalUser user = localUserRepository.findByUsernameIgnoreCase("UserA").get();
         String token = jwtService.generateVerificationJWT(user);
         Assertions.assertNull(jwtService.getUsername(token), "В токене верификации не должно быть юзернейма");
     }
@@ -45,7 +45,7 @@ public class JWTServiceTest {
      */
     @Test
     public void testAuthTokenReturnsUsername() {
-        LocalUser user = localUserDAO.findByUsernameIgnoreCase("UserA").get();
+        LocalUser user = localUserRepository.findByUsernameIgnoreCase("UserA").get();
         String token = jwtService.generateJWT(user);
         Assertions.assertEquals(user.getUsername(), jwtService.getUsername(token), "Токен для авторизации должен содержать юзернейм.");
     }
@@ -107,7 +107,7 @@ public class JWTServiceTest {
      */
     @Test
     public void testPasswordResetToken() {
-        LocalUser user = localUserDAO.findByUsernameIgnoreCase("UserA").get();
+        LocalUser user = localUserRepository.findByUsernameIgnoreCase("UserA").get();
         String token = jwtService.generatePasswordResetJWT(user);
         Assertions.assertEquals(user.getEmail(),
                 jwtService.getResetPasswordEmail(token), "Почта должна совпадать с той что внутри " +

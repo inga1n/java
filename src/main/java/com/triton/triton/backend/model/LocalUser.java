@@ -1,15 +1,7 @@
 package com.triton.triton.backend.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import jakarta.persistence.CascadeType;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.OneToMany;
-import jakarta.persistence.OrderBy;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
@@ -54,6 +46,9 @@ public class LocalUser implements UserDetails {
     /** Has the users email been verified? */
     @Column(name = "email_verified", nullable = false)
     private Boolean emailVerified = false;
+    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JoinColumn(name = "shopping_cart_id", referencedColumnName = "id")
+    private ShoppingCart shoppingCart;
 
     /**
      * Is the email verified?
@@ -62,6 +57,13 @@ public class LocalUser implements UserDetails {
     public Boolean isEmailVerified() {
         return emailVerified;
     }
+
+    public ShoppingCart getShoppingCart() {
+        return shoppingCart;
+    }
+
+
+
 
     /**
      * Sets the email verified state.

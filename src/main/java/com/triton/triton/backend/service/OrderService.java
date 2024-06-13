@@ -4,8 +4,7 @@ import org.springframework.stereotype.Service;
 
 import com.triton.triton.backend.model.LocalUser;
 import com.triton.triton.backend.model.WebOrder;
-import com.triton.triton.backend.model.dao.WebOrderDAO;
-import org.springframework.stereotype.Service;
+import com.triton.triton.backend.model.repository.WebOrderRepository;
 
 import java.util.List;
 
@@ -16,14 +15,14 @@ import java.util.List;
 public class OrderService {
 
     /** The Web Order DAO. */
-    private WebOrderDAO webOrderDAO;
+    private WebOrderRepository webOrderRepository;
 
     /**
      * Constructor for spring injection.
-     * @param webOrderDAO
+     * @param webOrderRepository
      */
-    public OrderService(WebOrderDAO webOrderDAO) {
-        this.webOrderDAO = webOrderDAO;
+    public OrderService(WebOrderRepository webOrderRepository) {
+        this.webOrderRepository = webOrderRepository;
     }
 
     /**
@@ -32,7 +31,7 @@ public class OrderService {
      * @return The list of orders.
      */
     public List<WebOrder> getOrders(LocalUser user) {
-        return webOrderDAO.findByUser(user);
+        return webOrderRepository.findByUser(user);
     }
 
 }

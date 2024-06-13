@@ -6,7 +6,7 @@ import java.util.Optional;
 
 import com.auth0.jwt.exceptions.JWTDecodeException;
 import com.triton.triton.backend.model.LocalUser;
-import com.triton.triton.backend.model.dao.LocalUserDAO;
+import com.triton.triton.backend.model.repository.LocalUserRepository;
 import com.triton.triton.backend.service.JWTService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -28,16 +28,16 @@ public class JWTRequestFilter extends OncePerRequestFilter {
     /** The JWT Service. */
     private JWTService jwtService;
     /** The Local User DAO. */
-    private LocalUserDAO localUserDAO;
+    private LocalUserRepository localUserRepository;
 
     /**
      * Constructor for spring injection.
      * @param jwtService
      * @param localUserDAO
      */
-    public JWTRequestFilter(JWTService jwtService, LocalUserDAO localUserDAO) {
+    public JWTRequestFilter(JWTService jwtService, LocalUserRepository localUserDAO) {
         this.jwtService = jwtService;
-        this.localUserDAO = localUserDAO;
+        this.localUserRepository = localUserRepository;
     }
 
     /**
@@ -50,7 +50,7 @@ public class JWTRequestFilter extends OncePerRequestFilter {
             String token = tokenHeader.substring(7);
             try {
                 String username = jwtService.getUsername(token);
-                Optional<LocalUser> opUser = localUserDAO.findByUsernameIgnoreCase(username);
+                Optional<LocalUser> opUser = localUserRepository.findByUsernameIgnoreCase(username);
                 if (opUser.isPresent()) {
                     LocalUser user = opUser.get();
                     if (user.isEmailVerified()) {

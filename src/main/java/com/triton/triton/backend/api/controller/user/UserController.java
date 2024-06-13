@@ -3,9 +3,8 @@ package com.triton.triton.backend.api.controller.user;
 import java.util.List;
 import java.util.Optional;
 
-import com.triton.triton.backend.model.Address;
 import com.triton.triton.backend.model.LocalUser;
-import com.triton.triton.backend.model.dao.AddressDAO;
+import com.triton.triton.backend.model.repository.AddressRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -17,9 +16,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.List;
-import java.util.Optional;
-
 /**
  * Rest Controller for user data interactions.
  */
@@ -28,14 +24,14 @@ import java.util.Optional;
 public class UserController {
 
     /** The Address DAO. */
-    private AddressDAO addressDAO;
+    private AddressRepository addressRepository;
 
     /**
      * Constructor for spring injection.
-     * @param addressDAO
+     * @param addressRepository
      */
-    public UserController(AddressDAO addressDAO) {
-        this.addressDAO = addressDAO;
+    public UserController(AddressRepository addressRepository) {
+        this.addressRepository = addressRepository;
     }
 
     /**
@@ -50,7 +46,7 @@ public class UserController {
         if (!userHasPermission(user, userId)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
-        return ResponseEntity.ok(addressDAO.findByUser_Id(userId));
+        return ResponseEntity.ok(addressRepository.findByUser_Id(userId));
     }
 
     /**
@@ -71,7 +67,7 @@ public class UserController {
         LocalUser refUser = new LocalUser();
         refUser.setId(userId);
         address.setUser(refUser);
-        return ResponseEntity.ok(addressDAO.save(address));
+        return ResponseEntity.ok(addressRepository.save(address));
     }
 
     /**
@@ -90,12 +86,12 @@ public class UserController {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
         if (address.getId() == addressId) {
-            Optional<com.triton.triton.backend.model.Address> opOriginalAddress = addressDAO.findById(addressId);
+            Optional<com.triton.triton.backend.model.Address> opOriginalAddress = addressRepository.findById(addressId);
             if (opOriginalAddress.isPresent()) {
                 LocalUser originalUser = opOriginalAddress.get().getUser();
                 if (originalUser.getId() == userId) {
                     address.setUser(originalUser);
-                    return ResponseEntity.ok(addressDAO.save(address));
+                    return ResponseEntity.ok(addressRepository.save(address));
                 }
             }
         }
